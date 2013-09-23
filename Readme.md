@@ -1,7 +1,7 @@
 
 # simplesocket-client
 
-Adds events layer on top of SimpleSocket.
+Adds events layer on top of [SimpleSocket](http://github.com/mkuklis/simplesocket).
 
 ## Installation
 
