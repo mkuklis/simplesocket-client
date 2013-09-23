@@ -1,9 +1,9 @@
 {
   "name": "simplesocket-client",
   "repo": "mkuklis/simplesocket-client",
-  "description": "Adds subscribe layer on top of SimpleSocket.",
+  "description": "Adds events layer on top of SimpleSocket.",
   "version": "0.0.1",
-  "keywords": ["simplesocket", "client", "pubsub"],
+  "keywords": ["simplesocket", "client", "events"],
   "dependencies": {
     "mkuklis/simplesocket": "*",
     "component/emitter": "*"
