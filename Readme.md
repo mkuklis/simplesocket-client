@@ -1,7 +1,7 @@
 
 # simplesocket-client
 
-  Add small layer on top of WebSocket to make life more enjoyable.
+	Adds events layer on top of SimpleSocket.
 
 ## Installation
 
