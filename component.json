@@ -1,0 +1,17 @@
+{
+  "name": "simplesocket-client",
+  "repo": "mkuklis/simplesocket-client",
+  "description": "Adds subscribe layer on top of SimpleSocket.",
+  "version": "0.0.1",
+  "keywords": ["simplesocket", "client", "pubsub"],
+  "dependencies": {
+    "mkuklis/simplesocket": "*",
+    "component/emitter": "*"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": [
+    "index.js"
+  ],
+  "remotes": []
+}
