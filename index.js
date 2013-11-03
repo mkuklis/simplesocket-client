@@ -9,7 +9,7 @@ var client = module.exports = {
     this.socket.onmessage = function (event) {
       try {
         var data = JSON.parse(event.data);
-        
+
         if (data.name) {
           self.emit(data.name, data.args);
         }
@@ -25,6 +25,10 @@ var client = module.exports = {
 
     this.socket.onconnecting = function () {
       self.emit('connecting');
+    }
+
+    this.socket.onclose = function () {
+      self.emit('disconnect');
     }
 
     return this;
