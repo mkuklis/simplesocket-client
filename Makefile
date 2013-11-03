@@ -5,7 +5,7 @@ components: component.json
 	@component install --dev
 
 uglify:
-	@component build -s SSClient
+	@component build -s ssclient
 	@uglifyjs -nc --unsafe -mt -o ssclient.min.js build/build.js
 	@mv build/build.js ssclient.js
 

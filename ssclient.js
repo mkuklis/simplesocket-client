@@ -474,13 +474,22 @@ var client = module.exports = {
     this.socket.onmessage = function (event) {
       try {
         var data = JSON.parse(event.data);
+        
         if (data.name) {
           self.emit(data.name, data.args);
         }
       }
       catch (error) {
-
+        self.emit(error, error);
       }
+    }
+
+    this.socket.onerror = function (event) {
+      self.emit('error', event);
+    }
+
+    this.socket.onconnecting = function () {
+      self.emit('connecting');
     }
 
     return this;
@@ -504,5 +513,5 @@ require.alias("simplesocket-client/index.js", "simplesocket-client/index.js");if
 } else if (typeof define == "function" && define.amd) {
   define(function(){ return require("simplesocket-client"); });
 } else {
-  this["SSClient"] = require("simplesocket-client");
+  this["ssclient"] = require("simplesocket-client");
 }})();
