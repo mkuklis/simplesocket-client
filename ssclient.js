@@ -206,9 +206,10 @@ module.exports = SimpleSocket;
 function SimpleSocket(url, protocols, options) {
   this.options = options || {};
   this.url = url;
-  this.protocols = protocols || null;
-  this.reconnectDelay = this.options.reconnectDelay || 1000;
+  this.protocols = protocols;
+  this.reconnectDelay = this.options.reconnectDelay || 500;
   this.closeDelay = this.options.closeDelay || 2000;
+  this.currentDelay = this.reconnectDelay;
 
   this.readyState = WebSocket.CONNECTING;
   this.forcedClose = false;
@@ -220,7 +221,16 @@ function SimpleSocket(url, protocols, options) {
 SimpleSocket.prototype.connect = function (reconnect) {
   var self = this;
 
-  this.socket = new WebSocket(this.url, this.protocols);
+  if (WebSocket.length == 3) {
+    this.socket = new WebSocket(this.url, this.protocols, this.options);
+  }
+  else if (this.protocols) {
+    this.socket = new WebSocket(this.url, this.protocols);
+  }
+  else {
+    this.socket = new WebSocket(this.url);
+  }
+
   this.onconnecting && this.onconnecting();
 
   var closeIntervalId = setTimeout(function () {
@@ -234,8 +244,10 @@ SimpleSocket.prototype.connect = function (reconnect) {
 
     self.readyState = WebSocket.OPEN;
     reconnect = false;
+    self.currentDelay = self.reconnectDelay;
+
     self.onopen && self.onopen(event);
-  };
+  }
   
   this.socket.onclose = function (event) {
     clearTimeout(closeIntervalId);
@@ -244,6 +256,7 @@ SimpleSocket.prototype.connect = function (reconnect) {
     if (self.forcedClose) {
       self.readyState = WebSocket.CLOSED;
       self.onclose && self.onclose(event);
+      self.currentDelay = self.reconnectDelay;
     } 
     else {
       self.readyState = WebSocket.CONNECTING;
@@ -251,21 +264,24 @@ SimpleSocket.prototype.connect = function (reconnect) {
       
       if (!reconnect && !self.timedOut) {
         self.onclose && self.onclose(event);
+        self.currentDelay = self.reconnectDelay;
       }
 
       setTimeout(function () {
         self.connect(true);
-      }, self.reconnectDelay);
+        self.currentDelay *= 2;
+
+      }, self.currentDelay);
     }
-  };
+  }
 
   this.socket.onmessage = function (event) {
     self.onmessage && self.onmessage(event);
-  };
+  }
 
   this.socket.onerror = function (event) {
     self.onerror && self.onerror(event);
-  };
+  }
 }
 
 SimpleSocket.prototype.send = function (data) {
@@ -345,7 +361,8 @@ function mixin(obj) {
  * @api public
  */
 
-Emitter.prototype.on = function(event, fn){
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
   this._callbacks = this._callbacks || {};
   (this._callbacks[event] = this._callbacks[event] || [])
     .push(fn);
@@ -388,7 +405,8 @@ Emitter.prototype.once = function(event, fn){
 
 Emitter.prototype.off =
 Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners = function(event, fn){
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
   this._callbacks = this._callbacks || {};
 
   // all
@@ -466,41 +484,48 @@ require.register("simplesocket-client/index.js", function(exports, require, modu
 var Emitter = require('emitter');
 var SimpleSocket = require('simplesocket');
 
-var client = module.exports = {
-  connect: function (url, options) {
-    var self = this;
-    this.socket = new SimpleSocket(url, null, options);
-    
-    this.socket.onmessage = function (event) {
-      try {
-        var data = JSON.parse(event.data);
-
-        if (data.name) {
-          self.emit(data.name, data.args);
-        }
-      }
-      catch (error) {
-        self.emit(error, error);
-      }
-    }
-
-    this.socket.onerror = function (event) {
-      self.emit('error', event);
-    }
-
-    this.socket.onconnecting = function () {
-      self.emit('connecting');
-    }
-
-    this.socket.onclose = function () {
-      self.emit('disconnect');
-    }
-
-    return this;
-  }
-};
+var client = module.exports = {};
 
 Emitter(client);
+
+client.connect = function (url, options) {
+  var self = this;
+  this.socket = new SimpleSocket(url, undefined, options);
+  
+  this.socket.onmessage = function (event) {
+    try {
+      var data = JSON.parse(event.data);
+
+      if (data.name) {
+        self.trigger(data.name, data.args);
+      }
+    }
+    catch (error) {
+      self.trigger(error, error);
+    }
+  }
+  
+  this.socket.onerror = function (event) {
+    self.trigger('error', event);
+  }
+
+  this.socket.onconnecting = function () {
+    self.trigger('connecting');
+  }
+
+  this.socket.onclose = function () {
+    self.trigger('disconnect');
+  }
+  
+  return this;
+}
+
+client.trigger = client.emit;
+
+client.emit = function (name, data) {
+  var message = { name: name, args: [ data ] };
+  this.socket.send(JSON.stringify(message));
+}
 });
 
 
