@@ -14,7 +14,7 @@ client.connect = function (url, options) {
       var data = JSON.parse(event.data);
 
       if (data.name) {
-        self.trigger(data.name, data.args);
+        self.trigger.apply(self, [data.name].concat(data.args));
       }
     }
     catch (error) {
