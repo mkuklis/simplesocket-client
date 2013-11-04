@@ -200,21 +200,31 @@ require.relative = function(parent) {
 
   return localRequire;
 };
-require.register("mkuklis-simplesocket/index.js", function(exports, require, module){
+require.register("mkuklis-simplesocket/lib/index.js", function(exports, require, module){
 module.exports = SimpleSocket;
 
 function SimpleSocket(url, protocols, options) {
+  var self = this;
+
   this.options = options || {};
   this.url = url;
   this.protocols = protocols;
   this.reconnectDelay = this.options.reconnectDelay || 500;
-  this.closeDelay = this.options.closeDelay || 2000;
+  this.closeDelay = this.options.closeDelay || 5000;
   this.currentDelay = this.reconnectDelay;
 
   this.readyState = WebSocket.CONNECTING;
   this.forcedClose = false;
   this.timedOut = false;
 
+  window.addEventListener('offline', function () {
+    self.close();
+  }, false);
+
+  window.addEventListener('online', function () {
+    self.connect();
+  }, false);
+  
   this.connect();
 }
 
@@ -235,7 +245,11 @@ SimpleSocket.prototype.connect = function (reconnect) {
 
   var closeIntervalId = setTimeout(function () {
     self.timedOut = true;
-    self.socket.close();
+    
+    if (self.socket.readyState !== WebSocket.CLOSED) {
+      self.socket.close();
+    }
+
     self.timedOut = false;
   }, this.closeDelay);
 
@@ -282,6 +296,7 @@ SimpleSocket.prototype.connect = function (reconnect) {
   this.socket.onerror = function (event) {
     self.onerror && self.onerror(event);
   }
+
 }
 
 SimpleSocket.prototype.send = function (data) {
@@ -293,12 +308,6 @@ SimpleSocket.prototype.send = function (data) {
 SimpleSocket.prototype.close = function () {
   this.forcedClose = true;
   
-  if (this.socket) {
-    this.socket.close();
-  }
-}
-
-SimpleSocket.prototype.refresh = function () {
   if (this.socket) {
     this.socket.close();
   }
@@ -529,10 +538,10 @@ client.emit = function (name, data) {
 });
 
 
-require.alias("mkuklis-simplesocket/index.js", "simplesocket-client/deps/simplesocket/index.js");
-require.alias("mkuklis-simplesocket/index.js", "simplesocket-client/deps/simplesocket/index.js");
-require.alias("mkuklis-simplesocket/index.js", "simplesocket/index.js");
-require.alias("mkuklis-simplesocket/index.js", "mkuklis-simplesocket/index.js");
+require.alias("mkuklis-simplesocket/lib/index.js", "simplesocket-client/deps/simplesocket/lib/index.js");
+require.alias("mkuklis-simplesocket/lib/index.js", "simplesocket-client/deps/simplesocket/index.js");
+require.alias("mkuklis-simplesocket/lib/index.js", "simplesocket/index.js");
+require.alias("mkuklis-simplesocket/lib/index.js", "mkuklis-simplesocket/index.js");
 require.alias("component-emitter/index.js", "simplesocket-client/deps/emitter/index.js");
 require.alias("component-emitter/index.js", "emitter/index.js");
 require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
