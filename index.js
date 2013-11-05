@@ -1,11 +1,19 @@
 var Emitter = require('emitter');
 var SimpleSocket = require('simplesocket');
 
-var client = module.exports = {};
+module.exports = {
+  connect: function (url, options) {
+    return new Client(url, options);
+  }
+};
 
-Emitter(client);
+function Client (url, options) {
+  this.connect(url, options);
+}
 
-client.connect = function (url, options) {
+Emitter(Client.prototype);
+
+Client.prototype.connect = function (url, options) {
   var self = this;
   this.socket = new SimpleSocket(url, undefined, options);
   
@@ -37,9 +45,14 @@ client.connect = function (url, options) {
   return this;
 }
 
-client.trigger = client.emit;
+Client.prototype.trigger = Client.prototype.emit;
 
-client.emit = function (name, data) {
+Client.prototype.emit = function (name, data) {
   var message = { name: name, args: [ data ] };
   this.socket.send(JSON.stringify(message));
+}
+
+Client.prototype.disconnect = function () {
+  this.removeAllListeners();
+  this.socket.close();
 }
