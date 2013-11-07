@@ -497,7 +497,7 @@ module.exports = {
   connect: function (url, options) {
     return new Client(url, options);
   }
-};
+}
 
 function Client (url, options) {
   this.connect(url, options);
@@ -518,7 +518,7 @@ Client.prototype.connect = function (url, options) {
       }
     }
     catch (error) {
-      self.trigger(error, error);
+      self.trigger('error', error);
     }
   }
   
